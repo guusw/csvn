@@ -1,0 +1,28 @@
+#!/bin/bash
+
+if [ -t 1 ] ; then
+    # Stdout is the terminal
+    if [[ $# -gt 0 ]]; then
+        case $1 in 
+        diff)
+            shift 1
+            csvn diff $@ | less
+        ;;
+        log)
+            shift 1
+            csvn log $@ | less
+        ;;
+        logv)
+            shift 1
+            csvn log -v $@ | less
+        ;;
+        *)
+            csvn $@
+        ;;
+        esac
+    else
+        csvn
+    fi
+else
+    csvn $@
+fi
