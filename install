@@ -1,0 +1,9 @@
+#!/bin/bash
+BaseDir=$(dirname $0)
+CurrentDir=$(pwd)
+
+cd ${BaseDir}/cmd/csvn
+go install
+Result=$?
+cd $CurrentDir
+exit $Result

@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+	"git.bakje.coffee/guus/csvn/aurora"
 	"bufio"
 	"encoding/xml"
 	"fmt"
@@ -11,7 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/logrusorgru/aurora"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
@@ -63,6 +64,13 @@ func main() {
 		tWidth, _, err := terminal.GetSize(int(os.Stdout.Fd()))
 		if err != nil {
 			tWidth = 75
+			tWidthEnv, hasTWidthEnv := os.LookupEnv("CSVN_WIDTH")
+			if hasTWidthEnv {
+				tWidthEnvParsed, err := strconv.ParseInt(tWidthEnv, 10, 32)
+				if err == nil {
+					tWidth = int(tWidthEnvParsed)
+				}
+			}
 		}
 
 		separatorString := strings.Repeat("=", tWidth)
@@ -151,11 +159,16 @@ func main() {
 						actionColor = aurora.BlueFg
 					}
 
+					if path.Kind == "dir" {
+						actionColor |= aurora.ItalicFm
+					}
+					
 					pathString := aurora.Colorize(path.Path, actionColor)
 					fmt.Printf("  %s %s\n",
 						aurora.Colorize(path.Action, actionColor),
 						pathString)
 				}
+				fmt.Println() // Empty line
 			}
 		} else if command == "diff" {
 			svnCmd.Stderr = os.Stderr
@@ -219,18 +232,20 @@ func main() {
 				}
 
 				line := string(lineBytes)
-				mode := '\u0000'
-				if len(line) > 0 {
-					mode = ([]rune)(line)[0]
+				mode := ""
+				if len(line) >= 8 {
+					mode = strings.TrimRight(line[:8], " ")
 				}
 				switch mode {
-				case 'M':
+				case " M":
+					line = aurora.Sprintf(aurora.Bold(aurora.Blue("%s")), line)
+				case "M":
 					line = aurora.Sprintf(aurora.Blue("%s"), line)
-				case '!':
+				case "!":
 					line = aurora.Sprintf(aurora.Inverse(aurora.Red("%s")), line)
-				case 'D':
+				case "D":
 					line = aurora.Sprintf(aurora.Red("%s"), line)
-				case 'A':
+				case "A":
 					line = aurora.Sprintf(aurora.Green("%s"), line)
 				default:
 					line = aurora.Sprintf(aurora.Gray("%s"), line)

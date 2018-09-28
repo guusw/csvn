@@ -1,28 +1,34 @@
 #!/bin/bash
 
 if [ -t 1 ] ; then
+    export CSVN_WIDTH=$(tput cols)
     # Stdout is the terminal
     if [[ $# -gt 0 ]]; then
         case $1 in 
         diff)
             shift 1
-            csvn diff $@ | less
+            csvn diff "$@" | less
         ;;
         log)
             shift 1
-            csvn log $@ | less
+            csvn log "$@" | less
         ;;
         logv)
             shift 1
-            csvn log -v $@ | less
+            csvn log -v "$@" | less
+        ;;
+        commit)
+            # Used to allow interactive
+            shift 1
+            svn commit "$@"
         ;;
         *)
-            csvn $@
+            csvn "$@"
         ;;
         esac
     else
         csvn
     fi
 else
-    csvn $@
+    csvn "$@"
 fi

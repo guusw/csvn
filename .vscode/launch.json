@@ -14,7 +14,7 @@
             "host": "127.0.0.1",
             "program": "${workspaceRoot}/cmd/csvn/main.go",
             "env": {},
-            "cwd": "/ssd1/Thrillrush-linux-4.10f1",
+            "cwd": "${workspaceRoot}/test",
             "args": [
                 "log",
                 "-v",
@@ -31,7 +31,7 @@
             "host": "127.0.0.1",
             "program": "${workspaceRoot}/cmd/csvn/main.go",
             "env": {},
-            "cwd": "/ssd1/Thrillrush-linux-4.10f1",
+            "cwd": "${workspaceRoot}/test",
             "args": [
                 "diff",
                 "-r", "3289",
@@ -48,7 +48,7 @@
             "host": "127.0.0.1",
             "program": "${workspaceRoot}/cmd/csvn/main.go",
             "env": {},
-            "cwd": "/ssd1/Thrillrush-linux-4.10f1",
+            "cwd": "${workspaceRoot}/test",
             "args": [
                 "status"
             ],
