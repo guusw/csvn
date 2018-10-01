@@ -14,7 +14,7 @@
             "host": "127.0.0.1",
             "program": "${workspaceRoot}/cmd/csvn/main.go",
             "env": {},
-            "cwd": "${workspaceRoot}/test",
+            "cwd": "${workspaceRoot}/test/dir",
             "args": [
                 "log",
                 "-v",

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-	"git.bakje.coffee/guus/csvn/aurora"
 	"bufio"
 	"encoding/xml"
 	"fmt"
@@ -10,8 +8,12 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
+
+	"git.bakje.coffee/guus/csvn/aurora"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -46,11 +48,6 @@ func svnRunDefault(cmd *exec.Cmd) {
 }
 
 func main() {
-	svnPath, err := exec.LookPath("svn")
-	if err != nil {
-		log.Fatalf("svn executable not found (%s)", err)
-	}
-
 	svnArgs := os.Args[1:]
 	command := ""
 	if len(svnArgs) > 0 {
@@ -76,6 +73,33 @@ func main() {
 		separatorString := strings.Repeat("=", tWidth)
 
 		if command == "log" {
+			relative := false
+			// Process custom arguments
+			svnArgsNew := make([]string,1,len(svnArgs)) 
+			svnArgsNew[0] = svnCmd.Args[0]
+			for _, arg := range svnArgs {
+				if arg == "--rel" {
+					// This shows any paths in the log as relative paths and strips unrelevant paths from the log
+					relative = true
+				} else {
+					svnArgsNew = append(svnArgsNew, arg)
+				}
+			}
+			svnArgs = svnArgsNew
+			svnCmd.Args = svnArgsNew
+			
+			// Get prefix path for repo
+			cwd, _ := os.Getwd()
+			var prefixPath string
+			if relative {
+				svnInfo, err := GetSVNInfo(cwd)
+				if err != nil {
+					log.Fatalln(err)
+				}
+				svnInfoEntry := svnInfo.Entries[0]
+				prefixPath = filepath.Clean(strings.TrimPrefix(svnInfoEntry.RelativeURL, "^"))
+			}
+
 			svnCmd.Stderr = os.Stderr
 			stdOutReader, stdOutWriter := io.Pipe()
 			svnCmd.Stdout = stdOutWriter
@@ -148,9 +172,9 @@ func main() {
 				msg := msgIndent + strings.Replace(logEntry.Message, "\n", "\n"+msgIndent, -1)
 				fmt.Println(msg)
 
-				for _, path := range logEntry.Paths {
+				for _, entryPath := range logEntry.Paths {
 					var actionColor aurora.Color
-					switch path.Action {
+					switch entryPath.Action {
 					case "A":
 						actionColor = aurora.GreenFg
 					case "D":
@@ -159,13 +183,25 @@ func main() {
 						actionColor = aurora.BlueFg
 					}
 
-					if path.Kind == "dir" {
+					if entryPath.Kind == "dir" {
 						actionColor |= aurora.ItalicFm
 					}
 					
-					pathString := aurora.Colorize(path.Path, actionColor)
+					entryFilePath := filepath.Clean(entryPath.Path)
+					if relative {
+						if !strings.HasPrefix(entryFilePath, prefixPath) {
+							continue // Filter ignored paths
+						}
+						
+						relativePath, err := filepath.Rel(prefixPath, entryFilePath)
+						if err == nil {
+							entryFilePath = relativePath
+						}
+					}
+
+					pathString := aurora.Colorize(entryFilePath, actionColor)
 					fmt.Printf("  %s %s\n",
-						aurora.Colorize(path.Action, actionColor),
+						aurora.Colorize(entryPath.Action, actionColor),
 						pathString)
 				}
 				fmt.Println() // Empty line

@@ -17,18 +17,14 @@ if [ -t 1 ] ; then
             shift 1
             csvn log -v "$@" | less
         ;;
-        commit)
-            # Used to allow interactive
-            shift 1
-            svn commit "$@"
-        ;;
         *)
-            csvn "$@"
+            # Used to allow interactive
+            svn "$@"
         ;;
         esac
     else
         csvn
     fi
 else
-    csvn "$@"
+    svn "$@"
 fi
